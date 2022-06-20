@@ -1,4 +1,4 @@
-module go-imap-client
+module github.com/Silthus/go-imap-client
 
 go 1.18
 
