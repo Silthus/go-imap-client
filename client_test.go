@@ -31,14 +31,14 @@ func (s *ClientTestSuite) SetupTest() {
 	s.client = create(s.listener.Addr().String())
 }
 
-func (s *ClientTestSuite) BeforeTest(suiteName, testName string) {
+func (s *ClientTestSuite) BeforeTest(_, testName string) {
 	if testName == "TestConnect" {
 		return
 	}
 	s.NoError(s.connect())
 }
 
-func (s *ClientTestSuite) AfterTest(suiteName, testName string) {
+func (s *ClientTestSuite) AfterTest(string, string) {
 }
 
 func (s *ClientTestSuite) TearDownTest() {
@@ -149,4 +149,20 @@ func ExampleConnect() {
 		log.Fatalf("error while connecting to mail server %s: %s", testServerAddress, err)
 	}
 	fmt.Printf("IMAP client is connected to %s: %t", client.ServerAddress(), client.IsConnected())
+}
+
+func ExampleClient_SearchMailbox() {
+	// connect to the imap server and login
+	client, err := Connect("imap.my-server.local", "username", "password")
+	if err != nil {
+		log.Fatalf("error while connecting to mail server %s: %s", testServerAddress, err)
+	}
+	// search the inbox for messages with "my message" in their subject
+	messages, err := client.SearchMailbox(InboxName, "my message")
+	if err != nil {
+		log.Fatalf("error while searching mailbox %q: %s", InboxName, err)
+	}
+	for _, msg := range messages {
+		log.Printf("Found message: %s", msg.Envelope.Subject)
+	}
 }
