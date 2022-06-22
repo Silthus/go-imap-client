@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"errors"
@@ -92,7 +92,7 @@ func (c *clientImpl) Connect(username, password string) (err error) {
 
 	err = c.imapClient.Login(username, password)
 	if err != nil {
-		return fmt.Errorf("unable to login into the mail server: %w", err)
+		return fmt.Errorf("access denied: %w", err)
 	}
 
 	c.authenticatedUser = username

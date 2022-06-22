@@ -30,6 +30,9 @@ import (
 )
 
 var cfgFile string
+var server string
+var user string
+var password string
 
 func newRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
@@ -66,6 +69,15 @@ func Execute() {
 
 func addPersistentFlags(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-imap-client.yaml)")
+	addRequiredGlobalFlag(rootCmd, &server, "server", "s", "", "mail server including port, e.g. --server=imap.my-server.com:143")
+	addRequiredGlobalFlag(rootCmd, &user, "user", "u", "", "user to use for the connection, e.g. --user=admin")
+	addRequiredGlobalFlag(rootCmd, &password, "password", "p", "", "password of the user, e.g. --password=my-password")
+}
+
+func addRequiredGlobalFlag(cmd *cobra.Command, flag *string, name, shorthand, value, usage string) {
+	cmd.PersistentFlags().StringVarP(flag, name, shorthand, value, usage)
+	cmd.MarkPersistentFlagRequired(name)
+	viper.BindPFlag(name, cmd.PersistentFlags().Lookup(name))
 }
 
 func addRootCmdFlags(rootCmd *cobra.Command) *bool {

@@ -22,12 +22,13 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"github.com/Silthus/go-imap-client/client"
 	"github.com/spf13/cobra"
 )
 
 func newSearchCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "search",
+	searchCmd := &cobra.Command{
+		Use:   "search <search term>",
 		Short: "A brief description of your command",
 		Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -35,8 +36,29 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Println("search called")
+		Args: cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			c, err := client.Connect(server, user, password)
+			if err != nil {
+				return err
+			}
+
+			messages, err := c.SearchMailbox(client.InboxName, args[0])
+			if err != nil {
+				return err
+			}
+
+			if len(messages) < 1 {
+				cmd.Println("Found no messages matching the given search term.")
+			} else {
+				for _, msg := range messages {
+					cmd.Println(msg.Envelope.Subject)
+				}
+			}
+
+			return nil
 		},
 	}
+
+	return searchCmd
 }

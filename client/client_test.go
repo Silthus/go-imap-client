@@ -1,18 +1,15 @@
-package main
+package client
 
 import (
 	"fmt"
+	"github.com/Silthus/go-imap-client/testserver"
 	"github.com/emersion/go-imap"
-	"github.com/emersion/go-imap/backend/memory"
 	"github.com/emersion/go-imap/server"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"log"
 	"net"
 	"testing"
 )
-
-const testServerAddress = "127.0.0.1:0"
 
 type ClientTestSuite struct {
 	suite.Suite
@@ -23,8 +20,7 @@ type ClientTestSuite struct {
 }
 
 func (s *ClientTestSuite) SetupSuite() {
-	s.listener = createListener(s.T())
-	s.imapServer = createServer(s.T(), s.listener)
+	s.imapServer, s.listener = testserver.New(s.T())
 }
 
 func (s *ClientTestSuite) SetupTest() {
@@ -49,23 +45,6 @@ func (s *ClientTestSuite) TearDownSuite() {
 	s.NoError(s.imapServer.Close())
 }
 
-func createListener(t *testing.T) net.Listener {
-	listener, err := net.Listen("tcp", testServerAddress)
-	assert.NoError(t, err)
-	return listener
-}
-
-func createServer(t *testing.T, listener net.Listener) *server.Server {
-	imapServer := server.New(memory.New())
-	imapServer.AllowInsecureAuth = true
-
-	go func(l net.Listener) {
-		assert.NoError(t, imapServer.Serve(l))
-	}(listener)
-
-	return imapServer
-}
-
 func (s *ClientTestSuite) connect() error {
 	return s.client.Connect("username", "password")
 }
@@ -78,7 +57,7 @@ func (s *ClientTestSuite) TestConnect() {
 		s.client.Close()
 	})
 	s.Run("connect with wrong password fails", func() {
-		client, err := Connect(testServerAddress, "username", "wrong")
+		client, err := Connect(testserver.Address, "username", "wrong")
 		s.Error(err)
 		s.NotNil(client)
 		s.False(client.IsConnected())
@@ -146,7 +125,7 @@ func TestClientTestSuite(t *testing.T) {
 func ExampleConnect() {
 	client, err := Connect("imap.my-server.local", "username", "password")
 	if err != nil {
-		log.Fatalf("error while connecting to mail server %s: %s", testServerAddress, err)
+		log.Fatalf("error while connecting to mail server %s: %s", testserver.Address, err)
 	}
 	fmt.Printf("IMAP client is connected to %s: %t", client.ServerAddress(), client.IsConnected())
 }
@@ -155,7 +134,7 @@ func ExampleClient_SearchMailbox() {
 	// connect to the imap server and login
 	client, err := Connect("imap.my-server.local", "username", "password")
 	if err != nil {
-		log.Fatalf("error while connecting to mail server %s: %s", testServerAddress, err)
+		log.Fatalf("error while connecting to mail server %s: %s", testserver.Address, err)
 	}
 	// search the inbox for messages with "my message" in their subject
 	messages, err := client.SearchMailbox(InboxName, "my message")
