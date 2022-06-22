@@ -46,14 +46,11 @@ to quickly create a Cobra application.`,
 		// Run: func(cmd *cobra.Command, args []string) { },
 	}
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-imap-client.yaml)")
+	cobra.OnInitialize(initConfig)
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	addPersistentFlags(rootCmd)
+	addRootCmdFlags(rootCmd)
+	addChildCommands(rootCmd)
 
 	return rootCmd
 }
@@ -67,8 +64,16 @@ func Execute() {
 	}
 }
 
-func init() {
-	cobra.OnInitialize(initConfig)
+func addPersistentFlags(rootCmd *cobra.Command) {
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-imap-client.yaml)")
+}
+
+func addRootCmdFlags(rootCmd *cobra.Command) *bool {
+	return rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func addChildCommands(rootCmd *cobra.Command) {
+	rootCmd.AddCommand(newSearchCommand())
 }
 
 // initConfig reads in config file and ENV variables if set.
