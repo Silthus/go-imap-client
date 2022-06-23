@@ -22,28 +22,26 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/emersion/go-imap"
 	imapClient "github.com/emersion/go-imap/client"
 	"github.com/spf13/cobra"
+	"net"
 	"strings"
+	"time"
 )
 
 func newSearchCommand() *cobra.Command {
-	searchCmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "search <search term>",
-		Short: "A brief description of your command",
-		Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+		Short: "Searches a mailbox for mails matching a subject",
+		Long: `Allows searching a mailbox for mails where their subject matches the given search term. For example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+imap --server "my-server:993" --username username --password password --tls search my mail`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: searchMailbox,
 	}
-
-	return searchCmd
 }
 
 func searchMailbox(cmd *cobra.Command, args []string) error {
@@ -67,11 +65,19 @@ func searchMailbox(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func connectAndLogin() (*imapClient.Client, error) {
-	client, err := imapClient.Dial(server)
+func connectAndLogin() (client *imapClient.Client, err error) {
+	dialer := &net.Dialer{Timeout: 5 * time.Second}
+	if useTls {
+		client, err = imapClient.DialWithDialerTLS(dialer, server, &tls.Config{
+			InsecureSkipVerify: skipVerifyTls,
+		})
+	} else {
+		client, err = imapClient.DialWithDialer(dialer, server)
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	err = client.Login(username, password)
 	if err != nil {
 		return nil, err

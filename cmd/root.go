@@ -23,33 +23,45 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/emersion/go-imap"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
-var server string
-var username string
-var password string
+const defaultTimeout = 5 * time.Second
+
+var (
+	cfgFile       string
+	server        string
+	username      string
+	password      string
+	mailbox       string
+	useTls        bool
+	skipVerifyTls bool
+	timeout       time.Duration
+)
 
 func newRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:   "go-imap-client",
-		Short: "A brief description of your application",
-		Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+		Version: "1.0.0",
+		Use:     "go-imap-client",
+		Short:   "A CLI to connect to an IMAP mailbox and search it.",
+		Long: `The go-imap-client is a CLI that enables quick searching of an IMAP mailbox.
+This can be useful in automated environments, like CI/CD pipelines, to check if a mail arrived in the given inbox.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Usage Example:
+imap --server "my-server:993" --username "username" --password "password" --tls search my mail`,
 	}
+	cobra.OnInitialize(func() {
+		initConfig(rootCmd)
+	})
 
-	cobra.OnInitialize(initConfig)
+	configureFlags(rootCmd)
+	bindFlagsToConfig(rootCmd)
 
-	addPersistentFlags(rootCmd)
-	addRootCmdFlags(rootCmd)
 	addChildCommands(rootCmd)
 
 	return rootCmd
@@ -64,21 +76,28 @@ func Execute() {
 	}
 }
 
-func addPersistentFlags(rootCmd *cobra.Command) {
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-imap-client.yaml)")
-	addRequiredGlobalFlag(rootCmd, &server, "server", "s", "", "mail server including port, e.g. --server=imap.my-server.com:143")
-	addRequiredGlobalFlag(rootCmd, &username, "username", "u", "", "username to use for the connection, e.g. --username=admin")
-	addRequiredGlobalFlag(rootCmd, &password, "password", "p", "", "password of the username, e.g. --password=my-password")
+func configureFlags(rootCmd *cobra.Command) {
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.imap-cli.yaml)")
+
+	rootCmd.PersistentFlags().StringVarP(&server, "server", "s", "", "mail server including port, e.g. --server=imap.my-server.com:143")
+	rootCmd.PersistentFlags().StringVarP(&username, "username", "u", "", "username to use for the connection, e.g. --username=admin")
+	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "password of the username, e.g. --password=my-password")
+
+	rootCmd.MarkFlagsRequiredTogether("server", "username", "password")
+	rootCmd.MarkFlagRequired("server")
+	rootCmd.MarkFlagRequired("username")
+	rootCmd.MarkFlagRequired("password")
+
+	rootCmd.PersistentFlags().StringVarP(&mailbox, "mailbox", "m", imap.InboxName, "name of the mailbox")
+	rootCmd.PersistentFlags().DurationVar(&timeout, "timeout", defaultTimeout, "timeout for the connection to the mail server")
+
+	rootCmd.PersistentFlags().BoolVar(&useTls, "tls", false, "set to connect using tls (default is false)")
+	rootCmd.PersistentFlags().BoolVar(&skipVerifyTls, "skip-verify", false, "set to skip the verification of the server certificate (default is false)")
 }
 
-func addRequiredGlobalFlag(cmd *cobra.Command, flag *string, name, shorthand, value, usage string) {
-	cmd.PersistentFlags().StringVarP(flag, name, shorthand, value, usage)
-	cmd.MarkPersistentFlagRequired(name)
-	viper.BindPFlag(name, cmd.PersistentFlags().Lookup(name))
-}
-
-func addRootCmdFlags(rootCmd *cobra.Command) *bool {
-	return rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func bindFlagsToConfig(cmd *cobra.Command) {
+	viper.BindPFlags(cmd.PersistentFlags())
+	viper.BindPFlags(cmd.Flags())
 }
 
 func addChildCommands(rootCmd *cobra.Command) {
@@ -86,7 +105,7 @@ func addChildCommands(rootCmd *cobra.Command) {
 }
 
 // initConfig reads in config file and ENV variables if set.
-func initConfig() {
+func initConfig(cmd *cobra.Command) {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
@@ -97,14 +116,16 @@ func initConfig() {
 
 		// Search config in home directory with name ".go-imap-client" (without extension).
 		viper.AddConfigPath(home)
+		viper.AddConfigPath(".")
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".go-imap-client")
+		viper.SetConfigName(".imap-cli")
 	}
 
+	viper.SetEnvPrefix("IMAP_CLI")
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		cmd.Println(fmt.Sprintf("Using config file: %q", viper.ConfigFileUsed()))
 	}
 }
