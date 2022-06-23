@@ -22,8 +22,11 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"github.com/Silthus/go-imap-client/client"
+	"fmt"
+	"github.com/emersion/go-imap"
+	imapClient "github.com/emersion/go-imap/client"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 func newSearchCommand() *cobra.Command {
@@ -37,28 +40,86 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 		Args: cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			c, err := client.Connect(server, user, password)
-			if err != nil {
-				return err
-			}
-
-			messages, err := c.SearchMailbox(client.InboxName, args[0])
-			if err != nil {
-				return err
-			}
-
-			if len(messages) < 1 {
-				cmd.Println("Found no messages matching the given search term.")
-			} else {
-				for _, msg := range messages {
-					cmd.Println(msg.Envelope.Subject)
-				}
-			}
-
-			return nil
-		},
+		RunE: searchMailbox,
 	}
 
 	return searchCmd
+}
+
+func searchMailbox(cmd *cobra.Command, args []string) error {
+	client, err := connectAndLogin()
+	if err != nil {
+		return err
+	}
+	mailbox, err := client.Select(imap.InboxName, true)
+	if err != nil {
+		return err
+	}
+
+	subject := args[0]
+	messages, err := fetchAndFilterMessages(client, mailbox, subject)
+	if err != nil {
+		return err
+	}
+
+	printResults(cmd, messages, subject)
+
+	return nil
+}
+
+func connectAndLogin() (*imapClient.Client, error) {
+	client, err := imapClient.Dial(server)
+	if err != nil {
+		return nil, err
+	}
+	err = client.Login(username, password)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+func fetchAndFilterMessages(client *imapClient.Client, mailbox *imap.MailboxStatus, subject string) (<-chan *imap.Message, error) {
+	messages, done := fetchMessages(client, mailbox)
+	messages = filterMessages(messages, subject)
+	if err := <-done; err != nil {
+		return messages, err
+	}
+	return messages, nil
+}
+
+func printResults(cmd *cobra.Command, messages <-chan *imap.Message, subject string) {
+	if len(messages) < 1 {
+		cmd.Println(fmt.Sprintf("Found no messages matching the search term: %q", subject))
+	}
+	for msg := range messages {
+		cmd.Println(msg.Envelope.Subject)
+	}
+}
+
+func fetchMessages(client *imapClient.Client, mailbox *imap.MailboxStatus) (<-chan *imap.Message, <-chan error) {
+	seqset := new(imap.SeqSet)
+	seqset.AddRange(mailbox.Messages, mailbox.Messages)
+
+	messages := make(chan *imap.Message, 10)
+	done := make(chan error, 1)
+
+	go func() {
+		done <- client.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope}, messages)
+	}()
+
+	return messages, done
+}
+
+func filterMessages(messages <-chan *imap.Message, subject string) <-chan *imap.Message {
+	out := make(chan *imap.Message)
+	go func() {
+		for msg := range messages {
+			if strings.Contains(msg.Envelope.Subject, subject) {
+				out <- msg
+			}
+		}
+		close(out)
+	}()
+	return out
 }

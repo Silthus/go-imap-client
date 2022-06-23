@@ -2,16 +2,38 @@ package cmd
 
 func (s *CmdTestSuite) TestSearchCmd() {
 	s.Run("search with invalid credentials returns error", func() {
-		s.assertExecuteError("access denied: Bad username or password", "search", "--server="+s.testServerAddress, "--user=username", "--password=wrong", "any")
+		s.assertExecuteError("Bad username or password", "search", "--server="+s.testServerAddress, "--username=username", "--password=wrong", "any")
 	})
-	s.Run("search with no results has exit code 0", func() {
-		out := s.execute("search", "--server="+s.testServerAddress, "--user=username", "--password=password", "some mail")
-		s.Contains(out, "Found no messages matching the given search term.")
-	})
-	s.Run("search with matches prints message subject", func() {
-		out := s.execute("search", "--server="+s.testServerAddress, "--user=username", "--password=password", "just for you")
-		s.Contains(out, "A little message")
-	})
+
+	tests := []struct {
+		name           string
+		searchTerm     string
+		expectedResult string
+	}{
+		{
+			"search with no results has exit code 0",
+			"some mail",
+			"Found no messages matching the search term: \"some mail\"",
+		},
+		{
+			"search with matches prints message subject",
+			"just for you",
+			"A little message",
+		},
+	}
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			result := s.executeSearch(test.searchTerm)
+			s.Contains(result, test.expectedResult)
+		})
+	}
+}
+
+func (s *CmdTestSuite) executeSearch(searchTerm string) string {
+	s.T().Helper()
+	out, err := s.executeErr("search", "--server="+s.testServerAddress, "--username=username", "--password=password", searchTerm)
+	s.NoError(err)
+	return out
 }
 
 func (s *CmdTestSuite) TestRequiredFlags() {
@@ -19,7 +41,7 @@ func (s *CmdTestSuite) TestRequiredFlags() {
 		flag string
 	}{
 		{"server"},
-		{"user"},
+		{"username"},
 		{"password"},
 	}
 	for _, test := range tests {

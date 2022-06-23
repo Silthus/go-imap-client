@@ -31,7 +31,7 @@ import (
 
 var cfgFile string
 var server string
-var user string
+var username string
 var password string
 
 func newRootCmd() *cobra.Command {
@@ -44,9 +44,6 @@ examples and usage of using your application. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-		// Uncomment the following line if your bare application
-		// has an action associated with it:
-		// Run: func(cmd *cobra.Command, args []string) { },
 	}
 
 	cobra.OnInitialize(initConfig)
@@ -70,8 +67,8 @@ func Execute() {
 func addPersistentFlags(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-imap-client.yaml)")
 	addRequiredGlobalFlag(rootCmd, &server, "server", "s", "", "mail server including port, e.g. --server=imap.my-server.com:143")
-	addRequiredGlobalFlag(rootCmd, &user, "user", "u", "", "user to use for the connection, e.g. --user=admin")
-	addRequiredGlobalFlag(rootCmd, &password, "password", "p", "", "password of the user, e.g. --password=my-password")
+	addRequiredGlobalFlag(rootCmd, &username, "username", "u", "", "username to use for the connection, e.g. --username=admin")
+	addRequiredGlobalFlag(rootCmd, &password, "password", "p", "", "password of the username, e.g. --password=my-password")
 }
 
 func addRequiredGlobalFlag(cmd *cobra.Command, flag *string, name, shorthand, value, usage string) {
