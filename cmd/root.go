@@ -50,9 +50,8 @@ var (
 
 func newRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Version: "1.0.0",
-		Use:     "go-imap-client",
-		Short:   "A CLI to connect to an IMAP mailbox and search it.",
+		Use:   "go-imap-client",
+		Short: "A CLI to connect to an IMAP mailbox and search it.",
 		Long: `The go-imap-client is a CLI that enables quick searching of an IMAP mailbox.
 This can be useful in automated environments, like CI/CD pipelines, to check if a mail arrived in the given inbox.
 
