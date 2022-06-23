@@ -86,9 +86,9 @@ func configureFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(&username, "username", "u", "", "username to use for the connection, e.g. --username=admin")
 	cmd.PersistentFlags().StringVarP(&password, "password", "p", "", "password of the username, e.g. --password=my-password")
 
-	cmd.PrintErrln(cmd.MarkFlagRequired("server"))
-	cmd.PrintErrln(cmd.MarkFlagRequired("username"))
-	cmd.PrintErrln(cmd.MarkFlagRequired("password"))
+	_ = cmd.MarkPersistentFlagRequired("server")
+	_ = cmd.MarkPersistentFlagRequired("username")
+	_ = cmd.MarkPersistentFlagRequired("password")
 
 	cmd.PersistentFlags().StringVarP(&mailbox, "mailbox", "m", imap.InboxName, "name of the mailbox")
 	cmd.PersistentFlags().DurationVar(&timeout, "timeout", defaultTimeout, "timeout for the connection to the mail server")
@@ -98,8 +98,8 @@ func configureFlags(cmd *cobra.Command) {
 }
 
 func bindFlagsToConfig(cmd *cobra.Command) {
-	cmd.PrintErrln(viper.BindPFlags(cmd.PersistentFlags()))
-	cmd.PrintErrln(viper.BindPFlags(cmd.Flags()))
+	_ = viper.BindPFlags(cmd.PersistentFlags())
+	_ = viper.BindPFlags(cmd.Flags())
 }
 
 func addChildCommands(rootCmd *cobra.Command) {
