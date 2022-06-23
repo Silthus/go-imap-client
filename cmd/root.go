@@ -19,6 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
 package cmd
 
 import (
@@ -79,27 +80,27 @@ func Execute() {
 	}
 }
 
-func configureFlags(rootCmd *cobra.Command) {
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.imap-cli.yaml)")
+func configureFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.imap-cli.yaml)")
 
-	rootCmd.PersistentFlags().StringVarP(&server, "server", "s", "", "mail server including port, e.g. --server=imap.my-server.com:143")
-	rootCmd.PersistentFlags().StringVarP(&username, "username", "u", "", "username to use for the connection, e.g. --username=admin")
-	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "password of the username, e.g. --password=my-password")
+	cmd.PersistentFlags().StringVarP(&server, "server", "s", "", "mail server including port, e.g. --server=imap.my-server.com:143")
+	cmd.PersistentFlags().StringVarP(&username, "username", "u", "", "username to use for the connection, e.g. --username=admin")
+	cmd.PersistentFlags().StringVarP(&password, "password", "p", "", "password of the username, e.g. --password=my-password")
 
-	rootCmd.MarkFlagRequired("server")
-	rootCmd.MarkFlagRequired("username")
-	rootCmd.MarkFlagRequired("password")
+	cmd.PrintErrln(cmd.MarkFlagRequired("server"))
+	cmd.PrintErrln(cmd.MarkFlagRequired("username"))
+	cmd.PrintErrln(cmd.MarkFlagRequired("password"))
 
-	rootCmd.PersistentFlags().StringVarP(&mailbox, "mailbox", "m", imap.InboxName, "name of the mailbox")
-	rootCmd.PersistentFlags().DurationVar(&timeout, "timeout", defaultTimeout, "timeout for the connection to the mail server")
+	cmd.PersistentFlags().StringVarP(&mailbox, "mailbox", "m", imap.InboxName, "name of the mailbox")
+	cmd.PersistentFlags().DurationVar(&timeout, "timeout", defaultTimeout, "timeout for the connection to the mail server")
 
-	rootCmd.PersistentFlags().BoolVar(&useTls, "tls", false, "set to connect using tls (default is false)")
-	rootCmd.PersistentFlags().BoolVar(&skipVerifyTls, "skip-verify", false, "set to skip the verification of the server certificate (default is false)")
+	cmd.PersistentFlags().BoolVar(&useTls, "tls", false, "set to connect using tls (default is false)")
+	cmd.PersistentFlags().BoolVar(&skipVerifyTls, "skip-verify", false, "set to skip the verification of the server certificate (default is false)")
 }
 
 func bindFlagsToConfig(cmd *cobra.Command) {
-	viper.BindPFlags(cmd.PersistentFlags())
-	viper.BindPFlags(cmd.Flags())
+	cmd.PrintErrln(viper.BindPFlags(cmd.PersistentFlags()))
+	cmd.PrintErrln(viper.BindPFlags(cmd.Flags()))
 }
 
 func addChildCommands(rootCmd *cobra.Command) {
