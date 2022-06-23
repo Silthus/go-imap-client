@@ -24,7 +24,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/emersion/go-imap"
+	"github.com/spf13/pflag"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -32,6 +34,7 @@ import (
 )
 
 const defaultTimeout = 5 * time.Second
+const envPrefix = "IMAP_CLI"
 
 var (
 	cfgFile       string
@@ -54,10 +57,10 @@ This can be useful in automated environments, like CI/CD pipelines, to check if 
 
 Usage Example:
 imap --server "my-server:993" --username "username" --password "password" --tls search my mail`,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			initConfig(cmd)
+		},
 	}
-	cobra.OnInitialize(func() {
-		initConfig(rootCmd)
-	})
 
 	configureFlags(rootCmd)
 	bindFlagsToConfig(rootCmd)
@@ -83,7 +86,6 @@ func configureFlags(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().StringVarP(&username, "username", "u", "", "username to use for the connection, e.g. --username=admin")
 	rootCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "password of the username, e.g. --password=my-password")
 
-	rootCmd.MarkFlagsRequiredTogether("server", "username", "password")
 	rootCmd.MarkFlagRequired("server")
 	rootCmd.MarkFlagRequired("username")
 	rootCmd.MarkFlagRequired("password")
@@ -121,11 +123,31 @@ func initConfig(cmd *cobra.Command) {
 		viper.SetConfigName(".imap-cli")
 	}
 
-	viper.SetEnvPrefix("IMAP_CLI")
-	viper.AutomaticEnv() // read in environment variables that match
-
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		cmd.Println(fmt.Sprintf("Using config file: %q", viper.ConfigFileUsed()))
 	}
+
+	viper.SetEnvPrefix(envPrefix)
+	viper.AutomaticEnv() // read in environment variables that match
+
+	bindFlags(cmd)
+}
+
+// Bind each cobra flag to its associated viper configuration (config file and environment variable)
+func bindFlags(cmd *cobra.Command) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		// Environment variables can't have dashes in them, so bind them to their equivalent
+		// keys with underscores, e.g. --favorite-color to STING_FAVORITE_COLOR
+		if strings.Contains(f.Name, "-") {
+			envVarSuffix := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
+			viper.BindEnv(f.Name, fmt.Sprintf("%s_%s", envPrefix, envVarSuffix))
+		}
+
+		// Apply the viper config value to the flag when the flag is not set and viper has a value
+		if !f.Changed && viper.IsSet(f.Name) {
+			val := viper.Get(f.Name)
+			cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
+		}
+	})
 }

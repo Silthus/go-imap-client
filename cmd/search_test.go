@@ -70,21 +70,6 @@ func (s *CmdTestSuite) TestOptionalBoolFlags() {
 	})
 }
 
-func (s *CmdTestSuite) TestRequiredFlags() {
-	tests := []struct {
-		flag string
-	}{
-		{"server"},
-		{"username"},
-		{"password"},
-	}
-	for _, test := range tests {
-		s.Run("flag:"+test.flag, func() {
-			s.assertRequiredFlag(test.flag, "search", "any")
-		})
-	}
-}
-
 func (s *CmdTestSuite) executeSearch(searchTerm string, flags ...string) string {
 	s.T().Helper()
 	args := []string{"search", "--server=" + s.testServerAddress, "--username=username", "--password=password", "--timeout=10ms", searchTerm}
