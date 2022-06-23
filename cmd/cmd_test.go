@@ -58,13 +58,6 @@ func (s *CmdTestSuite) assertExecuteError(expectedError string, args ...string) 
 	s.EqualError(err, expectedError)
 }
 
-func (s *CmdTestSuite) assertRequiredFlag(flag string, args ...string) {
-	s.T().Helper()
-	_, err := s.executeErr(args...)
-	s.ErrorContains(err, "required flag(s)")
-	s.ErrorContains(err, flag)
-}
-
 func (s *CmdTestSuite) assertOptionalFlag(flag string, value, expected interface{}) {
 	s.T().Helper()
 	var additionalFlags []string

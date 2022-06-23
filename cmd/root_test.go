@@ -5,7 +5,7 @@ func (s *CmdTestSuite) TestRootCmd() {
 }
 
 func (s *CmdTestSuite) TestLoadConfig() {
-	out, err := s.executeErr("--config=../testdata/test-config.yaml", "--server="+s.testServerAddress, "search", "any")
+	out, _ := s.executeErr("--config=../testdata/test-config.yaml", "--server="+s.testServerAddress, "search", "any")
 	s.Regexp("Using config file: \"(.*)test-config.yaml\"", out)
 
 	username, err := s.cmd.Flags().GetString("username")
