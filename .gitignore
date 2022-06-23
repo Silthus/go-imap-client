@@ -1,6 +1,6 @@
 # Config files with secrets
 .env
-.imap-cli.yaml
+.go-imap-client.yaml
 
 # Binaries for programs and plugins
 *.exe

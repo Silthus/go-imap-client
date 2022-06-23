@@ -80,7 +80,7 @@ func Execute() {
 }
 
 func configureFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.imap-cli.yaml)")
+	cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-imap-client.yaml)")
 
 	cmd.PersistentFlags().StringVarP(&server, "server", "s", "", "mail server including port, e.g. --server=imap.my-server.com:143")
 	cmd.PersistentFlags().StringVarP(&username, "username", "u", "", "username to use for the connection, e.g. --username=admin")
@@ -120,7 +120,7 @@ func initConfig(cmd *cobra.Command) {
 		viper.AddConfigPath(home)
 		viper.AddConfigPath(".")
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".imap-cli")
+		viper.SetConfigName(".go-imap-client")
 	}
 
 	// If a config file is found, read it in.
