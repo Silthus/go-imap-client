@@ -1,7 +1,8 @@
 package cmd
 
 func (s *CmdTestSuite) TestRootCmd() {
-	s.Contains(s.execute(), "go-imap-client")
+	_, err := s.executeErr()
+	s.NoError(err)
 }
 
 func (s *CmdTestSuite) TestLoadConfig() {
