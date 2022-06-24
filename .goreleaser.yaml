@@ -21,6 +21,18 @@ archives:
       386: i386
       amd64: x86_64
     format: binary
+dockers:
+  - image_templates:
+    - "silthus/go-imap-client:{{ .Tag }}"
+    - "silthus/go-imap-client:v{{ .Major }}"
+    - "silthus/go-imap-client:v{{ .Major }}.{{ .Minor }}"
+    - "silthus/go-imap-client:latest"
+    build_flag_templates:
+    - "--pull"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
 checksum:
   name_template: 'checksums.txt'
 snapshot:
