@@ -24,6 +24,7 @@ package cmd
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"github.com/emersion/go-imap"
 	imapClient "github.com/emersion/go-imap/client"
@@ -33,8 +34,13 @@ import (
 	"time"
 )
 
+var (
+	mailbox        string
+	noResultsError bool
+)
+
 func newSearchCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "search <search term>",
 		Short: "Searches a mailbox for mails matching a subject",
 		Long: `Allows searching a mailbox for mails where their subject matches the given search term. For example:
@@ -43,6 +49,11 @@ imap --server "my-server:993" --username username --password password --tls sear
 		Args: cobra.MinimumNArgs(1),
 		RunE: searchMailbox,
 	}
+
+	cmd.Flags().StringVarP(&mailbox, "mailbox", "m", imap.InboxName, "name of the mailbox")
+	cmd.Flags().BoolVarP(&noResultsError, "no-results-error", "e", false, "set to exit with an error code if no mails are found")
+
+	return cmd
 }
 
 func searchMailbox(cmd *cobra.Command, args []string) error {
@@ -56,14 +67,34 @@ func searchMailbox(cmd *cobra.Command, args []string) error {
 	}
 
 	subject := args[0]
-	messages, err := fetchAndFilterMessages(client, mailbox, subject)
+	messagesChan, err := fetchAndFilterMessages(client, mailbox, subject)
 	if err != nil {
 		return err
 	}
 
-	printResults(cmd, messages, subject)
+	return printMessagesOrRaiseError(cmd, subject, collectMessages(messagesChan))
+}
+
+func printMessagesOrRaiseError(cmd *cobra.Command, subject string, messages []*imap.Message) error {
+	errorMessage := fmt.Sprintf("Found no messages matching the search term: %q", subject)
+
+	if noResultsError && len(messages) < 1 {
+		return errors.New(errorMessage)
+	} else if len(messages) < 1 {
+		cmd.Println(errorMessage)
+	} else {
+		printResults(cmd, messages)
+	}
 
 	return nil
+}
+
+func collectMessages(messagesChan <-chan *imap.Message) []*imap.Message {
+	messages := make([]*imap.Message, 0)
+	for msg := range messagesChan {
+		messages = append(messages, msg)
+	}
+	return messages
 }
 
 func connectAndLogin() (client *imapClient.Client, err error) {
@@ -95,11 +126,8 @@ func fetchAndFilterMessages(client *imapClient.Client, mailbox *imap.MailboxStat
 	return messages, nil
 }
 
-func printResults(cmd *cobra.Command, messages <-chan *imap.Message, subject string) {
-	if len(messages) < 1 {
-		cmd.Println(fmt.Sprintf("Found no messages matching the search term: %q", subject))
-	}
-	for msg := range messages {
+func printResults(cmd *cobra.Command, messages []*imap.Message) {
+	for _, msg := range messages {
 		cmd.Println(msg.Envelope.Subject)
 	}
 }

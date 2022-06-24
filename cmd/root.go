@@ -24,7 +24,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/emersion/go-imap"
 	"github.com/spf13/pflag"
 	"os"
 	"strings"
@@ -42,7 +41,6 @@ var (
 	server        string
 	username      string
 	password      string
-	mailbox       string
 	useTls        bool
 	skipVerifyTls bool
 	timeout       time.Duration
@@ -90,7 +88,6 @@ func configureFlags(cmd *cobra.Command) {
 	_ = cmd.MarkPersistentFlagRequired("username")
 	_ = cmd.MarkPersistentFlagRequired("password")
 
-	cmd.PersistentFlags().StringVarP(&mailbox, "mailbox", "m", imap.InboxName, "name of the mailbox")
 	cmd.PersistentFlags().DurationVar(&timeout, "timeout", defaultTimeout, "timeout for the connection to the mail server")
 
 	cmd.PersistentFlags().BoolVar(&useTls, "tls", false, "set to connect using tls (default is false)")

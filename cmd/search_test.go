@@ -35,6 +35,14 @@ func (s *CmdTestSuite) TestSearchCmd() {
 	}
 }
 
+func (s *CmdTestSuite) TestEmptySearchWithErrorExitCode() {
+	s.Run("using the --no-results-error flag exists with an error when the search yields no results", func() {
+		args := s.buildSearchArgs("foo", "--no-results-error")
+		_, err := s.executeErr(args...)
+		s.Error(err)
+	})
+}
+
 func (s *CmdTestSuite) TestSearchWithTls() {
 	_, listener := testserver.NewTls(s.T())
 	s.Contains(s.executeSearch("just for you", "--tls", "--skip-verify", "--server="+listener.Addr().String()), "A little message")
@@ -46,11 +54,14 @@ func (s *CmdTestSuite) TestOptionalFlags() {
 		value    interface{}
 		expected interface{}
 	}{
-		{"mailbox", "", "INBOX"},
-		{"mailbox", "Other", "Other"},
 		{"tls", "", "false"},
 		{"skip-verify", "", "false"},
 		{"timeout", "", fmt.Sprint(5 * time.Second)},
+		// search specific flags
+		{"mailbox", "", "INBOX"},
+		{"mailbox", "Other", "Other"},
+		{"no-results-error", "", "false"},
+		{"no-results-error", true, "true"},
 	}
 	for _, test := range tests {
 		s.Run(test.flag+":"+fmt.Sprintf("%v", test.value)+"->"+fmt.Sprintf("%v", test.expected), func() {
@@ -71,10 +82,15 @@ func (s *CmdTestSuite) TestOptionalBoolFlags() {
 }
 
 func (s *CmdTestSuite) executeSearch(searchTerm string, flags ...string) string {
-	s.T().Helper()
-	args := []string{"search", "--server=" + s.testServerAddress, "--username=username", "--password=password", "--timeout=10ms", searchTerm}
-	args = append(args, flags...)
-	out, err := s.executeErr(args...)
+	out, err := s.executeErr(s.buildSearchArgs(searchTerm, flags...)...)
 	s.NoError(err)
 	return out
+}
+
+func (s *CmdTestSuite) buildSearchArgs(searchTerm string, flags ...string) (args []string) {
+	s.T().Helper()
+	return append(
+		[]string{"search", "--server=" + s.testServerAddress, "--username=username", "--password=password", "--timeout=10ms", searchTerm},
+		flags...,
+	)
 }

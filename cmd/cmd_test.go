@@ -64,12 +64,20 @@ func (s *CmdTestSuite) assertOptionalFlag(flag string, value, expected interface
 	if value != "" {
 		additionalFlags = append(additionalFlags, "--"+fmt.Sprintf("%v", flag)+"="+fmt.Sprintf("%v", value))
 	}
-	s.T().Helper()
 	args := append([]string{"search", "--server=" + s.testServerAddress, "--username=username", "--password=password", "any"}, additionalFlags...)
-	_, err := s.executeErr(args...)
-	s.NoError(err)
-	f := s.cmd.Flags().Lookup(flag)
-	s.Equal(expected, f.Value.String())
+	s.execute(args...)
+
+	found := false
+	for _, cmd := range s.cmd.Commands() {
+		//f := cmd.Flags().Lookup(flag)
+		f := cmd.Flag(flag)
+		if f != nil {
+			s.Equal(expected, f.Value.String())
+			found = true
+			break
+		}
+	}
+	s.True(found)
 }
 
 func TestCmdTestSuite(t *testing.T) {
