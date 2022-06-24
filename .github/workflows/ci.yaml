@@ -81,5 +81,4 @@ jobs:
         uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: silthus/go-imap-client
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
