@@ -8,6 +8,12 @@ Download the binary for your operating system from the [releases page][releases]
 
 ## Usage
 
+You can download the binary from [releases][releases] or run it as the Docker container `silthus/go-imap-client`.
+
+```bash
+docker run -it silthus/go-imap-client -e IMAP_CLI_USERNAME=test -e IMAP_CLI_PASSWORD=test --server imap.google.com:993 --tls search test
+```
+
 You can always find the up-to-date and full help by running `go-imap-client -h`. Here is a list of possible flags and
 their options.
 
