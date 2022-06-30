@@ -8,7 +8,7 @@ Download the binary for your operating system from the [releases page][releases]
 
 ## Usage
 
-You can download the binary from [releases][releases] or run it as the Docker container `silthus/go-imap-client`.
+You can download the binary from [releases][releases] or run it as a Docker container [`silthus/go-imap-client`][docker-hub].
 
 ```bash
 docker run -it silthus/go-imap-client -e IMAP_CLI_USERNAME=test -e IMAP_CLI_PASSWORD=test --server imap.google.com:993 --tls search test
@@ -62,5 +62,5 @@ mailbox: INBOX
 ```
 
 [go-imap]: https://github.com/emersion/go-imap
-
+[docker-hub]: https://hub.docker.com/r/silthus/go-imap-client
 [releases]: https://github.com/Silthus/go-imap-client/releases/latest
