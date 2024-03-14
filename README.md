@@ -11,7 +11,7 @@ Download the binary for your operating system from the [releases page][releases]
 You can download the binary from [releases][releases] or run it as a Docker container [`silthus/go-imap-client`][docker-hub].
 
 ```bash
-docker run -it silthus/go-imap-client -e IMAP_CLI_USERNAME=test -e IMAP_CLI_PASSWORD=test --server imap.google.com:993 --tls search test
+docker run -it silthus/go-imap-client -e IMAP_CLI_USERNAME=test -e IMAP_CLI_PASSWORD=test --server imap.gmail.com:993 --tls search test
 ```
 
 You can always find the up-to-date and full help by running `go-imap-client -h`. Here is a list of possible flags and
@@ -20,7 +20,7 @@ their options.
 | Flag            | Short | Description                                                                                         | Example                          | Default                                                                       |
 |-----------------|-------|-----------------------------------------------------------------------------------------------------|----------------------------------|-------------------------------------------------------------------------------|
 | `--config`      |       | Specify a config file to use. See [configuration](#Configuration) for more details.                 | `--config my-config.yaml"`       | Searches for a config in various places. See [configuration](#Configuration). |
-| `--server`      | `-s`  | The IMAP server to connect against. Including its port.                                             | `--server "imap.google.com:993"` |                                                                               |
+| `--server`      | `-s`  | The IMAP server to connect against. Including its port.                                             | `--server "imap.gmail.com:993"` |                                                                               |
 | `--username`    | `-u`  | The username used to authenticate.                                                                  | `--username "my.user@gmail.com"` |                                                                               |
 | `--password`    | `-p`  | The password of the user. Use single quotes <kbd>'</kbd> to wrap passwords with special characters. | `--password 'password'`          |                                                                               |
 | `--tls`         |       | Set to connect against servers using TLS. (required for most mail servers)                          | `--tls`                          | `false`                                                                       |
@@ -37,7 +37,7 @@ Search the inbox of a mailbox for mails matching a given subject. Here are the `
 | `--no-results-error` | `-e`  | Returns an error and exit code if the search finds no results. | `--no-results-error` | `false` |
 
 ```bash
-go-imap-client --server "imap.google.com:993" --tls --username "my-user@gmail.com" --password 'my_super_secret_PW!' search awesome search term
+go-imap-client --server "imap.gmail.com:993" --tls --username "my-user@gmail.com" --password 'my_super_secret_PW!' search awesome search term
 ```
 
 ## Configuration
@@ -50,7 +50,7 @@ The configuration looks like this. All values can be overwritten by specifying t
 Config files named `.go-imap-client.yaml` located in `$HOME` or the executables' directory are sourced automatically.
 
 ```yaml
-server: "imap.google.com:993"
+server: "imap.gmail.com:993"
 tls: true
 skip-verify: false
 username: user@gmail.com
